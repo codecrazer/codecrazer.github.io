@@ -1,0 +1,500 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>全台放射腫瘤科 30 分鐘可及性地圖</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
+<style>
+:root{--green:#16a34a;--red:#dc2626;--navy:#0f172a;--muted:#64748b;--panel:rgba(255,255,255,.94)}
+*{box-sizing:border-box}html,body,#map{height:100%;margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans TC",sans-serif}
+#map{background:#dbeafe}.panel{position:absolute;z-index:1000;top:12px;left:12px;width:min(310px,calc(100vw - 24px));background:var(--panel);backdrop-filter:blur(10px);border-radius:14px;padding:11px;box-shadow:0 10px 28px rgba(15,23,42,.18)}
+h1{font-size:17px;margin:0 0 4px;color:var(--navy);padding-right:52px;line-height:1.3}.sub{font-size:10px;color:var(--muted);line-height:1.4}.legend{display:flex;gap:6px 10px;flex-wrap:wrap;font-size:10px;margin-top:7px}.dot{display:inline-block;width:9px;height:9px;border-radius:3px;margin-right:4px;vertical-align:-1px}.status{margin-top:7px;padding:6px 8px;border-radius:8px;background:#f1f5f9;font-size:10px;line-height:1.35;color:#334155}.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-top:7px}.stat{background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:5px 3px;text-align:center}.stat b{display:block;font-size:13px;color:#0f172a}.stat span{font-size:9px;color:#64748b}.leaflet-tooltip.town-label{background:rgba(255,255,255,.86);border:0;box-shadow:none;border-radius:4px;padding:1px 4px;font-size:9px;color:#0f172a;font-weight:650}.hospital-icon{background:#fff;border:2px solid #7c3aed;border-radius:50%;width:18px!important;height:18px!important;box-shadow:0 2px 8px rgba(0,0,0,.25)}.hospital-icon:after{content:'✚';display:block;color:#7c3aed;font-size:11px;text-align:center;line-height:14px;font-weight:900}.leaflet-popup-content{line-height:1.55}.leaflet-popup-content b{font-size:14px}.source-link{color:#2563eb;text-decoration:none}.unmatched{margin-top:7px;border:1px solid #e2e8f0;border-radius:9px;background:#fff;overflow:hidden}.unmatched summary{cursor:pointer;padding:6px 8px;font-size:10px;font-weight:700;color:#334155;list-style:none}.unmatched summary::-webkit-details-marker{display:none}.unmatched summary:after{content:'展開';float:right;color:#2563eb;font-weight:600}.unmatched[open] summary:after{content:'收合'}.unmatched-body{border-top:1px solid #e2e8f0;padding:7px 8px}.unmatched-note{font-size:9px;color:#64748b;line-height:1.4;margin-bottom:5px}.unmatched-wrap{max-height:170px;overflow:auto;border:1px solid #e2e8f0;border-radius:7px}.unmatched-table{width:100%;border-collapse:collapse;font-size:9px}.unmatched-table th,.unmatched-table td{padding:4px 5px;border-bottom:1px solid #e2e8f0;text-align:left;white-space:nowrap}.unmatched-table th{position:sticky;top:0;background:#f8fafc;color:#475569;z-index:1}.unmatched-table td:last-child,.unmatched-table th:last-child{text-align:right}.unmatched-empty{padding:12px;text-align:center;color:#16a34a;font-size:12px}.map-missing{margin-top:8px;font-size:11px;color:#64748b;line-height:1.5;max-height:90px;overflow:auto}.count-pill{display:inline-block;margin-left:4px;padding:1px 6px;border-radius:999px;background:#fee2e2;color:#b91c1c;font-size:10px}.toggle{position:absolute;right:7px;top:7px;z-index:2;background:#e2e8f0;color:#0f172a;border:0;border-radius:7px;padding:4px 7px;cursor:pointer;font-size:10px;font-weight:700}.toggle:hover{background:#cbd5e1}.toggle:focus-visible{outline:3px solid rgba(37,99,235,.35);outline-offset:2px}.panel.compact{width:auto;min-width:205px;padding:9px 55px 9px 10px}.panel.compact>*:not(h1):not(.toggle){display:none!important}.panel.compact h1{margin:0;padding-right:0;font-size:14px;line-height:1.3;white-space:nowrap}@media(max-width:600px){.panel{top:6px;left:6px;width:min(290px,calc(100vw - 12px));padding:9px}.panel.compact{width:auto;max-width:calc(100vw - 12px);min-width:205px;padding:9px 54px 9px 9px}.panel.compact h1{font-size:14px;overflow:hidden;text-overflow:ellipsis}.toggle{right:6px;top:6px}}
+</style>
+</head>
+<body>
+<div id="map"></div>
+<div class="panel" id="panel">
+<button class="toggle" id="panelToggle" type="button" aria-expanded="true" aria-controls="panel">收合</button>
+<h1>全台放射腫瘤科 30 分鐘可及性</h1>
+<div class="sub">各鄉鎮優先使用中華郵政行政區經緯度至所有院所的道路時間計算 30 分鐘可及性；點擊鄉鎮會列出 30 分鐘內可到達的放射腫瘤科院所。道路時間不含即時塞車。</div>
+<div class="legend"><span><i class="dot" style="background:var(--green)"></i>30 分鐘內可到任一院所</span><span><i class="dot" style="background:var(--red)"></i>30 分鐘內無任何院所可到</span><span><i class="dot" style="background:#7c3aed;border-radius:50%"></i>放射腫瘤科院所</span></div>
+<div class="stats">
+  <div class="stat"><b id="greenN">—</b><span>綠色鄉鎮</span></div>
+  <div class="stat"><b id="redN">—</b><span>紅色鄉鎮</span></div>
+  <div class="stat"><b id="hospN">—</b><span>院所標記</span></div>
+  <div class="stat"><b id="greenPop">—</b><span>綠區人口</span></div>
+  <div class="stat"><b id="redPop">—</b><span>紅區人口</span></div>
+  <div class="stat"><b id="totalPop">—</b><span>資料總人口</span></div>
+  <div class="stat"><b id="matchedPop">—</b><span>已配對人口</span></div>
+  <div class="stat"><b id="missingPop">—</b><span>未配對人口</span></div>
+  <div class="stat"><b id="coverageRate">—</b><span>30 分鐘涵蓋率</span></div>
+</div>
+<div class="status" id="status">正在載入地圖資料…</div>
+<details class="unmatched" id="unmatchedDetails">
+  <summary>未配對人口明細 <span class="count-pill" id="unmatchedCount">—</span></summary>
+  <div class="unmatched-body">
+    <div class="unmatched-note" id="unmatchedSummary">人口資料載入後，將列出未能對應到地圖行政區的人口。</div>
+    <div class="unmatched-wrap" id="unmatchedWrap">
+      <div class="unmatched-empty">正在整理資料…</div>
+    </div>
+    <div class="map-missing" id="mapMissing"></div>
+  </div>
+</details>
+</div>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+<script src="https://cdn.jsdelivr.net/npm/topojson-client@3/dist/topojson-client.min.js"></script>
+<script>
+const panelEl=document.getElementById('panel');
+const panelToggle=document.getElementById('panelToggle');
+panelToggle.addEventListener('click',event=>{
+ event.preventDefault();
+ event.stopPropagation();
+ const compact=panelEl.classList.toggle('compact');
+ panelToggle.textContent=compact?'展開':'收合';
+ panelToggle.setAttribute('aria-expanded',String(!compact));
+});
+const initialZoom=window.innerWidth>=900?7.75:(window.innerWidth>=600?7.5:7.1);
+const map=L.map('map',{zoomControl:false,zoomSnap:.25,zoomDelta:.5}).setView([23.70,121.03],initialZoom);
+L.DomEvent.disableClickPropagation(panelEl);
+L.DomEvent.disableScrollPropagation(panelEl);
+map.createPane('townPane'); map.getPane('townPane').style.zIndex=360;
+map.createPane('hospitalPane'); map.getPane('hospitalPane').style.zIndex=650;
+L.control.zoom({position:'bottomright'}).addTo(map);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap contributors'}).addTo(map);
+const fmt=n=>n?new Intl.NumberFormat('zh-TW').format(Math.round(n)):'—';
+const ACCESS_MINUTES=30;
+const PREFERRED_HOSPITAL='衛福部桃園醫院';
+const POST_COORD_XML_URL='https://www.post.gov.tw/post/download/1050812_%E8%A1%8C%E6%94%BF%E5%8D%80%E7%B6%93%E7%B7%AF%E5%BA%A6(toPost).xml';
+let townLayer, townFeatures=[], population={}, populationTownOnly={}, populationRows=[], populationRowsTotal=0, populationRowCount=0, travel={}, bestHospital={}, travelSource={}, accessibleHospitals={}, hospitalMarkers=[], officePointCache={};
+const countyNames=['台北市','新北市','桃園市','台中市','台南市','高雄市','基隆市','新竹市','嘉義市','宜蘭縣','新竹縣','苗栗縣','彰化縣','南投縣','雲林縣','嘉義縣','屏東縣','台東縣','花蓮縣','澎湖縣','金門縣','連江縣'];
+const countyAlias={
+ '台北縣':'新北市','桃園縣':'桃園市',
+ '台中縣':'台中市','台中市':'台中市',
+ '台南縣':'台南市','台南市':'台南市',
+ '高雄縣':'高雄市','高雄市':'高雄市',
+ '莆田縣':'莆田縣','福建省莆田縣':'莆田縣','福建莆田縣':'莆田縣'
+};
+const upgradedMunicipalities=new Set(['新北市','桃園市','台中市','台南市','高雄市']);
+// 舊圖資中的縣轄市升格／改制名稱，統一轉成現行名稱。
+const townAlias={
+ '彰化縣員林鎮':'員林市',
+ '苗栗縣頭份鎮':'頭份市',
+ '新竹縣竹北鄉':'竹北市',
+ '嘉義縣太保鄉':'太保市',
+ '嘉義縣朴子鎮':'朴子市',
+ '苗栗縣苗栗鎮':'苗栗市',
+ '南投縣南投鎮':'南投市',
+ '雲林縣斗六鎮':'斗六市',
+ '澎湖縣馬公鎮':'馬公市'
+};
+const nonAdministrativeTownNames=new Set(['地圖區','海域','海面','台灣海域','中華民國領海']);
+function cleanName(s){
+ return String(s||'')
+  .normalize('NFKC')
+  .replace(/臺/g,'台')
+  .replace(/[\s　]/g,'')
+  .replace(/\[[^\]]*\]/g,'')
+  .replace(/\([^)]*\)/g,'')
+  .replace(/（[^）]*）/g,'')
+  .trim()
+}
+function canonicalCounty(s){const c=cleanName(s);return countyAlias[c]||c}
+function canonicalTown(county,town){
+ let t=cleanName(town);
+ if(!t)return t;
+ const direct=townAlias[cleanName(county+t)];
+ if(direct)return direct;
+ if(upgradedMunicipalities.has(county)&&/[市鎮鄉]$/.test(t))t=t.slice(0,-1)+'區';
+ return townAlias[cleanName(county+t)]||t
+}
+function isAdministrativeFeature(f){
+ const n=featureNames(f);
+ return Boolean(n.county&&n.town&&!nonAdministrativeTownNames.has(n.town));
+}
+function featureNames(f){
+ const p=f.properties||{};
+ let rawCounty=cleanName(propName(p,['COUNTYNAME','COUNTY_NAM','county','COUNTY','縣市','C_Name','COUNTYNAME_']));
+ let rawTown=cleanName(propName(p,['TOWNNAME','TOWN_NAM','town','TOWN','鄉鎮市區','T_Name','TOWNNAME_']));
+ let full=cleanName(propName(p,['name','NAME','Name','行政區名','FULLNAME']));
+ if(!rawCounty&&full){
+   const oldAndNew=[...Object.keys(countyAlias),...countyNames].sort((a,b)=>b.length-a.length);
+   const hit=oldAndNew.find(x=>full.startsWith(x));
+   if(hit){rawCounty=hit;rawTown=rawTown||full.slice(hit.length)}
+ }
+ let county=canonicalCounty(rawCounty);
+ if(!rawTown&&full){
+   const rawPrefix=rawCounty&&full.startsWith(rawCounty)?rawCounty:(county&&full.startsWith(county)?county:'');
+   rawTown=rawPrefix?full.slice(rawPrefix.length):full
+ }
+ let town=canonicalTown(county,rawTown);
+ // 烏坵在不同圖資可能寫成烏坵、烏坵鄉、莆田縣烏坵，甚至只藏在其他屬性欄位。
+ // 只要該 feature 明確包含「烏坵」，人口配對一律使用金門縣代管鍵。
+ const featureText=cleanName(Object.values(p).join('')+full+rawCounty+rawTown);
+ if(featureText.includes('烏坵')||town==='烏坵'||town==='烏坵鄉'){
+   county='金門縣';
+   town='烏坵鄉';
+ }
+ // 部分圖資的 name 欄只有「縣市＋鄉鎮」；統一轉成現行名稱後再建立唯一鍵。
+ const currentFull=cleanName(county+town);
+ return {county,town,full:currentFull||cleanName(full)}
+}
+const hospitals=[["臺大醫院",25.0413,121.5189,"臺北","腫瘤醫學部放射腫瘤科","臺北市中正區常德街1號"],["臺北市立聯合醫院中興院區",25.0524,121.5101,"臺北","腫瘤醫療中心","臺北市大同區鄭州路145號"],["臺北市立聯合醫院仁愛院區",25.0376,121.5456,"臺北","放射腫瘤科","臺北市大安區仁愛路四段10號"],["國泰醫院",25.037,121.5531,"臺北","放射腫瘤科","臺北市大安區仁愛路四段280號"],["臺大醫院癌醫中心分院",25.0179,121.5436,"臺北","放射腫瘤部","臺北市大安區基隆路三段155巷57號"],["臺北醫學大學附設醫院",25.0268,121.5618,"臺北","放射腫瘤科","臺北市信義區吳興街252號"],["新光醫院",25.0967,121.5202,"臺北","腫瘤治療科","臺北市士林區文昌路95號"],["臺北榮民總醫院",25.121,121.5199,"臺北","重粒子及放射腫瘤部","臺北市北投區石牌路二段201號"],["和信治癌中心醫院",25.128,121.4673,"臺北","放射腫瘤科","臺北市北投區立德路125號"],["振興醫院",25.1178,121.5222,"臺北","放射腫瘤科","臺北市北投區振興街45號"],["三軍總醫院",25.0716,121.5922,"臺北","放射腫瘤部","臺北市內湖區成功路二段325號"],["臺北市立萬芳醫院",25.0004,121.5583,"臺北","放射腫瘤科","臺北市文山區興隆路三段111號"],["基隆長庚醫院情人湖院區",25.1577,121.7089,"基隆","放射腫瘤科","基隆市安樂區基金一路208巷200號"],["亞東紀念醫院",24.9977,121.4527,"新北","放射腫瘤科","新北市板橋區南雅南路二段21號"],["國泰醫院汐止分院",25.0733,121.6625,"新北","放射腫瘤科","新北市汐止區建成路59巷2號"],["耕莘醫院",24.9765,121.5375,"新北","放射腫瘤科","新北市新店區中正路362號"],["臺北慈濟醫院",24.9854,121.5363,"新北","放射腫瘤科","新北市新店區建國路289號"],["雙和醫院",24.9934,121.4939,"新北","放射腫瘤科","新北市中和區中正路291號"],["新北市立土城醫院",24.9787,121.4481,"新北","放射腫瘤科","新北市土城區金城路二段6號"],["恩主公醫院",24.9388,121.3634,"新北","放射腫瘤科","新北市三峽區復興路399號"],["衛生福利部臺北醫院",25.0428,121.4592,"新北","放射腫瘤科","新北市新莊區思源路127號"],["輔仁大學附設醫院",25.0393,121.4318,"新北","放射腫瘤科","新北市泰山區貴子路69號"],["馬偕醫院淡水院區",25.1397,121.4612,"新北","放射腫瘤科","新北市淡水區民生路45號"],["國立陽明交通大學附設醫院",24.7573,121.7545,"宜蘭","放射腫瘤科","宜蘭市新民路152號"],["羅東博愛醫院",24.6748,121.7715,"宜蘭","放射腫瘤科","宜蘭縣羅東鎮南昌路83號"],["羅東聖母醫院",24.6728,121.7704,"宜蘭","放射腫瘤科","宜蘭縣羅東鎮中正南路160號"],["新竹台大",24.8157,120.9804,"新竹","放射腫瘤科","新竹市經國路一段442巷25號"],["新竹馬偕醫院",24.8002,120.9909,"新竹","放射腫瘤科","新竹市光復路二段690號"],["中國醫藥大學新竹附設醫院",24.8279,121.0019,"新竹","放射腫瘤科","新竹縣竹北市興隆路一段199號"],["聯新國際醫院",24.9518,121.2183,"桃園","放射腫瘤科","桃園市平鎮區廣泰路77號"],["敏盛綜合醫院龍潭院區",24.8612,121.213,"桃園","放射腫瘤科","桃園市龍潭區中豐路168號"],["國軍桃園總醫院",24.8762,121.2362,"桃園","放射腫瘤科","桃園市龍潭區中興路168號"],["怡仁綜合醫院",24.9137,121.1849,"桃園","放射腫瘤科","桃園市楊梅區楊新北路321巷30號"],["敏盛綜合醫院經國院區",25.02,121.3048,"桃園","放射腫瘤科","桃園市桃園區經國路168號"],["聖保祿醫院",24.9825,121.3138,"桃園","放射腫瘤科","桃園市桃園區建新街151、153號"],["衛福部桃園醫院",24.9777,121.2687,"桃園","放射腫瘤科","桃園市桃園區中山路1492號"],["林口長庚醫院",25.0616,121.3684,"桃園","質子暨放射治療中心","桃園市龜山區文化一路15號"],["為恭醫院東興院區",24.6918,120.9099,"苗栗","放射腫瘤科","苗栗縣頭份市水源路417巷11號"],["大千綜合醫院",24.5606,120.8217,"苗栗","放射腫瘤科","苗栗市新光街6號"],["中山醫學大學附設醫院",24.1222,120.6505,"臺中","放射腫瘤科","臺中市南區建國北路一段110號"],["衛福部臺中醫院",24.1437,120.676,"臺中","放射腫瘤科","臺中市西區三民路一段199號"],["中國醫藥大學附設醫院",24.1573,120.681,"臺中","放射腫瘤部","臺中市北區育德路2號"],["臺中榮民總醫院",24.1842,120.6044,"臺中","放射腫瘤部","臺中市西屯區臺灣大道四段1650號"],["澄清醫院",24.1827,120.6174,"臺中","放射腫瘤科","臺中市西屯區臺灣大道四段966號"],["林新醫院",24.149,120.6344,"臺中","放射腫瘤科","臺中市南屯區惠中路三段36號"],["國軍臺中總醫院",24.1508,120.7193,"臺中","放射腫瘤科","臺中市太平區中山路二段348號"],["大里仁愛醫院",24.1069,120.6814,"臺中","放射腫瘤科","臺中市大里區東榮路483號"],["亞洲大學附設醫院",24.0473,120.687,"臺中","放射腫瘤科","臺中市霧峰區福新路222號"],["衛福部豐原醫院",24.2528,120.7214,"臺中","放射腫瘤科","臺中市豐原區安康路100號"],["臺中慈濟醫院",24.1944,120.7213,"臺中","放射腫瘤科","臺中市潭子區豐興路一段66號"],["光田醫院",24.2384,120.5638,"臺中","放射腫瘤科","臺中市沙鹿區向上路七段127號"],["童綜合醫院",24.2467,120.542,"臺中","放射腫瘤科","臺中市梧棲區臺灣大道八段699號"],["彰化基督教醫院",24.0712,120.5444,"彰化","放射腫瘤部","彰化市南校街135號"],["秀傳紀念醫院",24.0672,120.5376,"彰化","放射腫瘤科","彰化市中山路一段542號"],["彰濱秀傳紀念醫院",24.1592,120.4247,"彰化","放射腫瘤科","彰化縣鹿港鎮鹿工路6號"],["鹿港基督教醫院",24.0572,120.4355,"彰化","放射腫瘤科","彰化縣鹿港鎮中正路480號"],["衛福部彰化醫院",23.9528,120.4807,"彰化","放射腫瘤科","彰化縣埔心鄉中正路二段80號"],["衛福部南投醫院",23.9119,120.684,"南投","放射腫瘤科","南投市復興路478號"],["埔里基督教醫院",23.965,120.963,"南投","放射腫瘤科","南投縣埔里鎮鐵山路1號"],["聖馬爾定醫院",23.4618,120.4686,"嘉義","放射腫瘤科","嘉義市大雅路二段565號"],["嘉義基督教醫院",23.4997,120.4494,"嘉義","放射腫瘤科","嘉義市忠孝路539號"],["臺中榮總嘉義分院",23.4784,120.4315,"嘉義","放射腫瘤科","嘉義市西區世賢路二段600號"],["嘉義長庚醫院",23.4627,120.2854,"嘉義","放射腫瘤科","嘉義縣朴子市嘉朴路西段6號"],["大林慈濟醫院",23.5968,120.4551,"嘉義","放射腫瘤科","嘉義縣大林鎮民生路2號"],["臺大醫院雲林分院虎尾院區",23.7229,120.4238,"雲林","腫瘤醫學部放射腫瘤科","雲林縣虎尾鎮學府路95號"],["雲林基督教醫院",23.8017,120.4621,"雲林","放射腫瘤科","雲林縣西螺鎮市場南路375號"],["中國醫藥大學北港附設醫院",23.5782,120.3042,"雲林","放射腫瘤科","雲林縣北港鎮新德路123號"],["新樓醫院",22.9919,120.2095,"臺南","放射腫瘤科","臺南市東區東門路一段57號"],["郭綜合醫院",22.9957,120.1972,"臺南","放射腫瘤科","臺南市中西區民生路二段23號"],["成大醫院",23.0025,120.2194,"臺南","腫瘤醫學部放射腫瘤科","臺南市北區勝利路138號"],["臺南市立安南醫院",23.0664,120.2193,"臺南","放射腫瘤科","臺南市安南區長和路二段66號"],["奇美醫院",23.0205,120.2221,"臺南","放射腫瘤部","臺南市永康區中華路901號"],["柳營奇美醫院",23.2858,120.3265,"臺南","放射腫瘤科","臺南市柳營區太康里201號"],["高雄市立大同醫院",22.6279,120.297,"高雄","放射腫瘤科","高雄市前金區中華三路68號"],["阮綜合醫院",22.6266,120.2984,"高雄","放射腫瘤科","高雄市苓雅區成功一路162號"],["國軍高雄總醫院",22.6255,120.3228,"高雄","放射腫瘤科","高雄市苓雅區中正一路2號"],["高雄市立聯合醫院",22.6559,120.2915,"高雄","放射腫瘤科","高雄市鼓山區中華一路976號"],["高雄醫學大學附設醫院",22.6468,120.3096,"高雄","放射腫瘤部","高雄市三民區自由一路100號"],["高雄市立小港醫院",22.565,120.3633,"高雄","放射腫瘤科","高雄市小港區山明路482號"],["高雄榮民總醫院",22.6775,120.3223,"高雄","放射腫瘤部","高雄市左營區大中一路386號"],["國軍左營總醫院",22.6876,120.2944,"高雄","放射腫瘤科","高雄市左營區軍校路553號"],["高雄醫學大學附設高醫岡山醫院",22.7925,120.2985,"高雄","放射腫瘤科","高雄市岡山區捷安路8號"],["高雄秀傳紀念醫院",22.8469,120.2588,"高雄","放射腫瘤科","高雄市路竹區北嶺六路100號"],["義守大學附設醫院",22.7646,120.3633,"高雄","放射腫瘤部","高雄市燕巢區角宿里義大路1號"],["義大癌治療醫院",22.7655,120.3647,"高雄","放射腫瘤醫學部","高雄市燕巢區角宿里義大路21號"],["高雄長庚醫院",22.6494,120.3568,"高雄","放射腫瘤部","高雄市鳥松區大埤路123號"],["衛福部屏東醫院",22.6769,120.4944,"屏東","放射腫瘤科","屏東市自由路270號"],["寶建醫院自由院區",22.6812,120.4922,"屏東","放射腫瘤科","屏東市自由路650之1號"],["屏東基督教醫院",22.6822,120.5062,"屏東","放射腫瘤科","屏東市大連路60號"],["屏東榮民總醫院",22.6588,120.5086,"屏東","放射腫瘤科","屏東市榮總東路1號"],["東港安泰醫院",22.4667,120.449,"屏東","放射腫瘤科","屏東縣東港鎮中正路一段210號"],["台東馬偕醫院",22.7642,121.1469,"臺東","放射腫瘤科","臺東市長沙街303巷1號"],["台東基督教醫院",22.7558,121.1452,"臺東","放射腫瘤科","臺東市開封街350號"],["花蓮慈濟醫院",23.9942,121.5925,"花蓮","放射腫瘤科","花蓮市中央路三段707號"],["門諾醫院",23.9992,121.6049,"花蓮","放射腫瘤科","花蓮市民權路44號"]];
+function addHospitals(){
+ const icon=L.divIcon({className:'hospital-icon',iconSize:[18,18],iconAnchor:[9,9]});
+ hospitals.forEach(h=>{
+   const name=h[0], city=h[3], department=h[4]||'放射腫瘤科', address=h[5]||'';
+   const searchUrl='https://www.google.com/search?q='+encodeURIComponent(name+' '+department+' 掛號 醫師');
+   const mapsUrl='https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(address||name);
+   const details=[`${city}｜${department}`,address?`地址：${address}`:''].filter(Boolean).join('<br>');
+   const m=L.marker([h[1],h[2]],{icon,title:name,pane:'hospitalPane'}).bindPopup(`<b>${name}</b><br>${details}<br><a class="source-link" target="_blank" rel="noopener" href="${searchUrl}">掛號與醫師資訊 ↗</a><br><a class="source-link" target="_blank" rel="noopener" href="${mapsUrl}">Google 地圖 ↗</a>`).addTo(map);
+   hospitalMarkers.push(m)
+ });
+ document.getElementById('hospN').textContent=hospitals.length
+}
+const townUrls=[
+ // 五都升格後的鄉鎮市區界線；桃園升格由 canonicalCounty/canonicalTown 轉為現行名稱。
+ 'https://cdn.jsdelivr.net/gh/ronnywang/twgeojson@master/twtown2010.3.json',
+ 'https://raw.githubusercontent.com/ronnywang/twgeojson/refs/heads/master/twtown2010.3.json',
+ // 備援來源：若新版來源暫時無法連線，仍會載入舊圖資並套用完整升格名稱轉換。
+ 'https://g0v.github.io/twgeojson/json/twTown1982.topo.json',
+ 'https://cdn.jsdelivr.net/gh/g0v/twgeojson@master/json/twTown1982.topo.json'
+];
+async function fetchJsonWithTimeout(url,ms=15000){
+ const ctl=new AbortController(), timer=setTimeout(()=>ctl.abort(),ms);
+ try{const r=await fetch(url,{signal:ctl.signal,cache:'force-cache'});if(!r.ok)throw new Error(String(r.status));return await r.json()}
+ finally{clearTimeout(timer)}
+}
+async function fetchFirst(urls){for(const u of urls){try{return await fetchJsonWithTimeout(u)}catch(e){console.warn('圖資來源失敗',u,e)}}throw new Error('行政區界線下載失敗')}
+function propName(p,keys){for(const k of keys)if(p&&p[k]!=null)return p[k];return ''}
+function townKey(f){const n=featureNames(f);return cleanName(n.county+n.town)||n.full}
+function labelName(f){const n=featureNames(f);return n.town||n.full}
+function countyName(f){return featureNames(f).county}
+function resolvePopulationForFeature(f){
+ const n=featureNames(f),keys=[cleanName(n.county+n.town),cleanName(n.full)].filter(Boolean);
+ for(const k of keys){
+   if(Number.isFinite(population[k])){
+     const row=populationRows.find(r=>r.key===k);
+     return {population:population[k],key:k,county:row?.county||n.county,town:row?.town||n.town,method:'縣市＋鄉鎮'}
+   }
+ }
+ const town=cleanName(n.town),choices=populationTownOnly[town]||[];
+ if(choices.length===1){
+   const choice=choices[0],key=cleanName(choice.county+choice.town);
+   return {population:choice.population,key,county:choice.county,town:choice.town,method:'唯一鄉鎮名稱'}
+ }
+ return null
+}
+function getPopulationForFeature(f){const r=resolvePopulationForFeature(f);return r?r.population:null}
+function updateUnmatchedPopulationList(matchedKeys,mapMissingNames=[]){
+ const unmatched=populationRows.filter(r=>!matchedKeys.has(r.key));
+ const total=unmatched.reduce((sum,r)=>sum+r.population,0);
+ const countEl=document.getElementById('unmatchedCount'),summary=document.getElementById('unmatchedSummary'),wrap=document.getElementById('unmatchedWrap'),mapMissing=document.getElementById('mapMissing');
+ if(countEl)countEl.textContent=`${unmatched.length} 區`;
+ if(summary)summary.textContent=unmatched.length?`人口表中共有 ${unmatched.length} 個行政區尚未配對，合計 ${fmt(total)} 人。`:'人口表中的行政區均已配對到地圖界線。';
+ if(wrap){
+   if(!unmatched.length)wrap.innerHTML='<div class="unmatched-empty">沒有未配對人口</div>';
+   else{
+     const countyOrder=new Map(countyNames.map((x,i)=>[x,i]));
+     unmatched.sort((a,b)=>(countyOrder.get(a.county)??99)-(countyOrder.get(b.county)??99)||a.town.localeCompare(b.town,'zh-Hant'));
+     const rows=unmatched.map(r=>`<tr><td>${r.county}</td><td>${r.town}</td><td>${fmt(r.population)}</td></tr>`).join('');
+     wrap.innerHTML=`<table class="unmatched-table"><thead><tr><th>縣市</th><th>鄉鎮市區</th><th>人口</th></tr></thead><tbody>${rows}</tbody></table>`
+   }
+ }
+ if(mapMissing){
+   const unique=[...new Set(mapMissingNames.filter(Boolean))];
+   mapMissing.innerHTML=unique.length?`<b>地圖界線有、人口表無：</b>${unique.join('、')}`:'地圖界線與人口表沒有額外的名稱缺口。'
+ }
+ return {unmatched,total}
+}
+function isValidCoord(v){return Array.isArray(v)&&v.length>=2&&Number.isFinite(+v[0])&&Number.isFinite(+v[1])}
+function cleanRing(ring){
+ if(!Array.isArray(ring))return null;
+ const out=ring.filter(isValidCoord).map(v=>[+v[0],+v[1]]);
+ if(out.length<3)return null;
+ const a=out[0],b=out[out.length-1];
+ if(a[0]!==b[0]||a[1]!==b[1])out.push([...a]);
+ return out.length>=4?out:null
+}
+function sanitizeFeature(f){
+ if(!f||!f.geometry)return null;
+ const g=f.geometry;let coords=null;
+ if(g.type==='Polygon'){coords=(g.coordinates||[]).map(cleanRing).filter(Boolean);if(!coords.length)return null}
+ else if(g.type==='MultiPolygon'){coords=(g.coordinates||[]).map(poly=>(poly||[]).map(cleanRing).filter(Boolean)).filter(poly=>poly.length);if(!coords.length)return null}
+ else return null;
+ return {...f,geometry:{...g,coordinates:coords}}
+}
+function ringAreaCentroid(ring){
+ let twiceArea=0,cx=0,cy=0;
+ for(let i=0;i<ring.length-1;i++){const x1=ring[i][0],y1=ring[i][1],x2=ring[i+1][0],y2=ring[i+1][1],cross=x1*y2-x2*y1;twiceArea+=cross;cx+=(x1+x2)*cross;cy+=(y1+y2)*cross}
+ if(Math.abs(twiceArea)<1e-12)return null;
+ return {area:twiceArea/2,lng:cx/(3*twiceArea),lat:cy/(3*twiceArea)}
+}
+function pointInRing(lng,lat,ring){
+ let inside=false;
+ for(let i=0,j=ring.length-1;i<ring.length;j=i++){const xi=ring[i][0],yi=ring[i][1],xj=ring[j][0],yj=ring[j][1];const hit=((yi>lat)!=(yj>lat))&&(lng<(xj-xi)*(lat-yi)/(yj-yi+1e-15)+xi);if(hit)inside=!inside}
+ return inside
+}
+function representativePoint(f){
+ try{
+   const polys=f.geometry.type==='Polygon'?[f.geometry.coordinates]:f.geometry.coordinates;
+   let bestRing=null,bestArea=-1,bestCentroid=null;
+   polys.forEach(poly=>{const ring=poly&&poly[0];if(!ring)return;const c=ringAreaCentroid(ring);const a=c?Math.abs(c.area):0;if(a>bestArea){bestArea=a;bestRing=ring;bestCentroid=c}});
+   if(!bestRing)return null;
+   if(bestCentroid&&Number.isFinite(bestCentroid.lat)&&Number.isFinite(bestCentroid.lng)&&pointInRing(bestCentroid.lng,bestCentroid.lat,bestRing))return [bestCentroid.lat,bestCentroid.lng];
+   const lng=bestRing.reduce((s,p)=>s+p[0],0)/bestRing.length,lat=bestRing.reduce((s,p)=>s+p[1],0)/bestRing.length;
+   if(Number.isFinite(lat)&&Number.isFinite(lng)&&pointInRing(lng,lat,bestRing))return [lat,lng];
+   const p=bestRing[Math.floor(bestRing.length/2)];return p&&isValidCoord(p)?[p[1],p[0]]:null
+ }catch(e){console.warn('無法計算行政區代表點',f,e);return null}
+}
+function officeCacheKey(f){return cleanName(countyName(f)+labelName(f))}
+function routingPointForFeature(f){
+ const key=officeCacheKey(f);
+ const office=Object.prototype.hasOwnProperty.call(officePointCache,key)?officePointCache[key]:null;
+ return office||representativePoint(f)
+}
+function leafTextMap(el){
+ const out=[];
+ for(const child of [...el.children]){
+   if(child.children.length===0){
+     const tag=cleanName(child.tagName||'').toLowerCase();
+     const value=cleanName(child.textContent||'');
+     if(value)out.push({tag,value})
+   }
+ }
+ for(const a of [...(el.attributes||[])]){
+   const tag=cleanName(a.name||'').toLowerCase();
+   const value=cleanName(a.value||'');
+   if(value)out.push({tag,value})
+ }
+ return out
+}
+function parsePostalAdminCoordinates(xmlText){
+ const doc=new DOMParser().parseFromString(xmlText,'application/xml');
+ if(doc.querySelector('parsererror'))throw new Error('中華郵政 XML 格式無法解析');
+ const found={};
+ const records=[...doc.querySelectorAll('*')].filter(el=>el.children.length>0&&[...el.children].every(c=>c.children.length===0));
+ for(const el of records){
+   const items=leafTextMap(el);if(!items.length)continue;
+   const values=items.map(x=>x.value);
+   let county='',town='';
+   for(const v0 of values){
+     const v=cleanName(v0);
+     const cc=canonicalCounty(v);
+     if(countyNames.includes(cc)){county=cc;continue}
+     const prefix=[...Object.keys(countyAlias),...countyNames].sort((a,b)=>b.length-a.length).find(x=>v.startsWith(x));
+     if(prefix){county=canonicalCounty(prefix);const remain=v.slice(prefix.length);if(/[區鄉鎮市]$/.test(remain))town=canonicalTown(county,remain)}
+   }
+   if(!town){
+     const tv=values.map(cleanName).find(v=>/[區鄉鎮市]$/.test(v)&&!countyNames.includes(canonicalCounty(v)));
+     if(tv)town=canonicalTown(county,tv)
+   }
+   if(!county||!town)continue;
+   let lat=NaN,lng=NaN;
+   for(const {tag,value} of items){
+     const n=Number(String(value).replace(/,/g,''));if(!Number.isFinite(n))continue;
+     if((tag.includes('lat')||tag.includes('緯')||tag==='y')&&n>=20&&n<=27)lat=n;
+     if((tag.includes('lng')||tag.includes('lon')||tag.includes('long')||tag.includes('經')||tag==='x')&&n>=117&&n<=123.8)lng=n
+   }
+   if(!Number.isFinite(lat)||!Number.isFinite(lng)){
+     const nums=values.map(v=>Number(String(v).replace(/,/g,''))).filter(Number.isFinite);
+     if(!Number.isFinite(lat))lat=nums.find(n=>n>=20&&n<=27);
+     if(!Number.isFinite(lng))lng=nums.find(n=>n>=117&&n<=123.8)
+   }
+   if(Number.isFinite(lat)&&Number.isFinite(lng))found[cleanName(county+town)]=[lat,lng]
+ }
+ // 烏坵在部分舊資料中可能歸為莆田縣；統一使用金門縣代管鍵。
+ for(const [k,v] of Object.entries({...found}))if(k.includes('烏坵'))found['金門縣烏坵鄉']=v;
+ return found
+}
+async function loadPostalAdminCoordinates(){
+ const cacheKey='postAdminCoordinates:1050812';
+ try{
+   const saved=localStorage.getItem(cacheKey);
+   if(saved){
+     const parsed=JSON.parse(saved);
+     if(parsed&&typeof parsed==='object'&&Object.keys(parsed).length>300){officePointCache=parsed;return Object.keys(parsed).length}
+   }
+ }catch(e){}
+ try{
+   const ctl=new AbortController(),timer=setTimeout(()=>ctl.abort(),18000);
+   const response=await fetch(POST_COORD_XML_URL,{signal:ctl.signal,cache:'force-cache'});
+   clearTimeout(timer);
+   if(!response.ok)throw new Error('HTTP '+response.status);
+   const xmlText=await response.text();
+   const parsed=parsePostalAdminCoordinates(xmlText);
+   const count=Object.keys(parsed).length;
+   if(count<300)throw new Error('解析到的行政區座標不足：'+count);
+   officePointCache=parsed;
+   try{localStorage.setItem(cacheKey,JSON.stringify(parsed))}catch(e){}
+   return count
+ }catch(e){
+   console.warn('中華郵政行政區經緯度載入失敗，改用行政區代表點',e);
+   officePointCache={};
+   return 0
+ }
+}
+function hav(a,b,c,d){const R=6371,rad=Math.PI/180;const x=(c-a)*rad,y=(d-b)*rad;const q=Math.sin(x/2)**2+Math.cos(a*rad)*Math.cos(c*rad)*Math.sin(y/2)**2;return 2*R*Math.asin(Math.sqrt(q))}
+function isMainIsland(c){return c&&c[1]>120.0&&c[1]<122.1&&c[0]>21.75&&c[0]<25.45}
+// 這些行政區與台灣本島之間沒有連續公路，不能用 driving 路線跨海計算。
+const noRoadTownKeys=new Set(['台東縣綠島鄉','台東縣蘭嶼鄉','屏東縣琉球鄉','金門縣烏坵鄉']);
+const noRoadCounties=new Set(['澎湖縣','金門縣','連江縣']);
+function isNoRoadFeature(f){
+ const n=featureNames(f),key=cleanName(n.county+n.town);
+ return noRoadTownKeys.has(key)||noRoadCounties.has(n.county)
+}
+function isRoadConnectedFeature(f,c){return Boolean(c&&isMainIsland(c)&&!isNoRoadFeature(f))}
+function candidateHospitals(lat,lng,limit=null){
+ const ranked=hospitals.map((h,idx)=>({idx,km:hav(lat,lng,h[1],h[2])})).sort((a,b)=>a.km-b.km);
+ return limit==null?ranked:ranked.slice(0,limit)
+}
+function fallbackForTown(lat,lng){
+ const ranked=candidateHospitals(lat,lng);if(!ranked.length)return null;
+ const estimates=ranked.map(x=>({idx:x.idx,minutes:Math.round((x.km*1.34/52)*60+7)}));
+ const best=estimates[0];
+ const within=estimates.filter(x=>x.minutes<=ACCESS_MINUTES).map(x=>x.idx);
+ return {minutes:best.minutes,hospitalIndex:best.idx,within}
+}
+function seedFallbackTimes(){townFeatures.forEach((f,i)=>{const c=routingPointForFeature(f);if(isRoadConnectedFeature(f,c)){const r=fallbackForTown(c[0],c[1]);travel[i]=r?r.minutes:null;bestHospital[i]=r?r.hospitalIndex:null;accessibleHospitals[i]=r?r.within:[];travelSource[i]=Object.prototype.hasOwnProperty.call(officePointCache,officeCacheKey(f))&&officePointCache[officeCacheKey(f)]?'中華郵政行政區座標估算':'行政區代表點估算'}else{travel[i]=null;bestHospital[i]=null;accessibleHospitals[i]=[];travelSource[i]='無陸路'}})}
+async function loadPopulation(){
+ try{
+  const url='https://zh.wikipedia.org/w/api.php?action=parse&page='+encodeURIComponent('中華民國臺灣地區鄉鎮市區列表')+'&prop=text&format=json&origin=*';
+  const j=await fetchJsonWithTimeout(url,12000);
+  const doc=new DOMParser().parseFromString(j.parse.text['*'],'text/html');
+  const tables=[...doc.querySelectorAll('table.wikitable')];
+  const table=tables.find(t=>{const h=cleanName(t.querySelector('tr')?.textContent||'');return h.includes('鄉鎮市區')&&h.includes('人口數')&&h.includes('區域代碼')});
+  if(!table)throw new Error('找不到鄉鎮人口表');
+  let currentCounty='',total=0,count=0;const seen=new Set();
+  table.querySelectorAll('tbody tr').forEach(tr=>{
+   const cells=[...tr.querySelectorAll(':scope > th, :scope > td')].map(x=>cleanName(x.textContent));
+   if(!cells.length)return;
+   const town=cells[0];if(!/[市區鄉鎮]$/.test(town)||town.includes('名稱'))return;
+   const countyCell=cells.find(v=>countyNames.includes(canonicalCounty(v)));if(countyCell)currentCounty=canonicalCounty(countyCell);
+   const codeIndex=cells.findIndex(v=>/^\d{8}$/.test(v));if(codeIndex<0||!cells[codeIndex+2])return;
+   const raw=cells[codeIndex+2].replace(/,/g,'');const pop=/^\d+$/.test(raw)?Number(raw):NaN;
+   if(!Number.isFinite(pop)||pop<100||pop>1000000)return;
+   const currentTown=canonicalTown(currentCounty,town);
+   const combined=cleanName(currentCounty+currentTown);if(!combined)return;
+   population[combined]=pop;
+   const row={county:currentCounty,town:currentTown,key:combined,population:pop};
+   const tk=cleanName(currentTown);(populationTownOnly[tk]||(populationTownOnly[tk]=[])).push(row);
+   if(!seen.has(combined)){seen.add(combined);populationRows.push(row);total+=pop;count++}
+  });
+  populationRowsTotal=total;populationRowCount=count;
+  if(total<20000000||count<350)throw new Error(`人口資料不完整：${count} 區、${total} 人`);
+ }catch(e){console.warn('人口資料載入失敗',e);throw e}
+}
+function adjustedRoadMinutes(seconds){
+ const raw=seconds/60;
+ if(raw<=20)return Math.round(raw*1.14+2);
+ if(raw<=60)return Math.round(raw*1.10+4);
+ return Math.round(raw*1.06+7)
+}
+async function routeTimesToAllHospitals(){
+ const status=document.getElementById('status');
+ status.textContent='正在計算各鄉鎮至所有院所的 30 分鐘可及性…';
+ const mainland=townFeatures.map((f,i)=>({f,i,c:routingPointForFeature(f)})).filter(x=>isRoadConnectedFeature(x.f,x.c));
+ // 公開 OSRM table 服務通常限制單次座標數，因此以 12 個鄉鎮 + 完整院所名單分批計算。
+ const batchSize=12;
+ const hospitalIds=hospitals.map((_,i)=>i);
+ for(let s=0;s<mainland.length;s+=batchSize){
+   const group=mainland.slice(s,s+batchSize);
+   const coords=[...group.map(x=>[x.c[1],x.c[0]]),...hospitals.map(h=>[h[2],h[1]])];
+   const sources=group.map((_,i)=>i).join(';');
+   const destinations=hospitalIds.map((_,i)=>group.length+i).join(';');
+   const url='https://router.project-osrm.org/table/v1/driving/'+coords.map(x=>x.join(',')).join(';')+'?sources='+sources+'&destinations='+destinations+'&annotations=duration';
+   try{
+     const j=await fetchJsonWithTimeout(url,22000);
+     if(!j.durations||j.durations.length!==group.length)throw new Error('道路矩陣格式錯誤');
+     group.forEach((x,row)=>{
+       let minSec=Infinity,minHospital=null;
+       const within=[];
+       hospitalIds.forEach((hid,col)=>{
+         const sec=j.durations[row]&&j.durations[row][col];
+         if(Number.isFinite(sec)){
+           const mins=adjustedRoadMinutes(sec);
+           if(sec<minSec){minSec=sec;minHospital=hid}
+           if(mins<=ACCESS_MINUTES)within.push(hid);
+         }
+       });
+       accessibleHospitals[x.i]=within;
+       if(Number.isFinite(minSec)&&minHospital!=null){travel[x.i]=adjustedRoadMinutes(minSec);bestHospital[x.i]=minHospital;travelSource[x.i]='道路估算'}
+     })
+   }catch(e){console.warn('道路矩陣批次失敗，保留距離估算',e)}
+   status.textContent=`已完成 ${Math.min(s+batchSize,mainland.length)} / ${mainland.length} 個鄉鎮`;
+   renderTowns()
+ }
+ renderTowns();status.textContent='點擊鄉鎮可查看人口與 30 分鐘內可及院所。'
+}
+function featureIndex(f){return Number.isInteger(f.__mapIndex)?f.__mapIndex:townFeatures.indexOf(f)}
+function styleTown(f){const i=featureIndex(f),m=travel[i];return {pane:'townPane',color:'#f8fafc',weight:1,opacity:1,fillOpacity:.62,fillColor:m!=null&&m<=ACCESS_MINUTES?'#16a34a':'#dc2626'}}
+function renderTowns(){
+ if(townLayer)map.removeLayer(townLayer);let green=0,red=0,gpop=0,rpop=0;
+ const matchedKeys=new Set(),countedKeys=new Set(),mapMissingNames=[];
+ const validFeatures=townFeatures.filter(f=>representativePoint(f));
+ townLayer=L.geoJSON(validFeatures,{pane:'townPane',style:styleTown,onEachFeature:(f,l)=>{
+   const i=featureIndex(f),m=travel[i],resolved=resolvePopulationForFeature(f),pop=resolved?resolved.population:null,c=routingPointForFeature(f),hid=bestHospital[i],h=Number.isInteger(hid)?hospitals[hid]:null,withinIds=Array.isArray(accessibleHospitals[i])?accessibleHospitals[i]:[];
+   if(resolved)matchedKeys.add(resolved.key);else mapMissingNames.push(`${countyName(f)}${labelName(f)}`);
+   if(m!=null&&m<=ACCESS_MINUTES){green++;if(resolved&&!countedKeys.has(resolved.key)){gpop+=pop;countedKeys.add(resolved.key)}}
+   else{red++;if(resolved&&!countedKeys.has(resolved.key)){rpop+=pop;countedKeys.add(resolved.key)}}
+   l.bindTooltip(`${labelName(f)}${pop?'<br>'+fmt(pop)+'人':''}`,{permanent:false,direction:'center',className:'town-label'});
+   const noRoad=isNoRoadFeature(f);
+   let accessHtml='';
+   if(noRoad) accessHtml='離島，無陸路車程';
+   else if(m==null) accessHtml='無可用道路資料';
+   else if(withinIds.length){
+     const names=withinIds.slice().sort((a,b)=>hospitals[a][0]===PREFERRED_HOSPITAL?-1:hospitals[b][0]===PREFERRED_HOSPITAL?1:0).map(id=>hospitals[id][0]);
+     accessHtml='30 分鐘內可及放腫院所：<br>'+names.join('<br>');
+   }else accessHtml='30 分鐘內可及放腫院所：無';
+   l.bindPopup(`<b>${countyName(f)} ${labelName(f)}</b><br>人口：${pop?fmt(pop)+' 人':'資料未匹配'}<br>${accessHtml}`);
+   l.on('mouseover',()=>l.setStyle({weight:2.2,fillOpacity:.78}));l.on('mouseout',()=>townLayer&&townLayer.resetStyle(l))
+ }}).addTo(map);
+ document.getElementById('greenN').textContent=green;
+ document.getElementById('redN').textContent=red;
+ document.getElementById('greenPop').textContent=gpop?fmt(gpop):'—';
+ document.getElementById('redPop').textContent=rpop?fmt(rpop):'—';
+ const unmatchedResult=updateUnmatchedPopulationList(matchedKeys,mapMissingNames);
+ const matchedPop=populationRows.filter(r=>matchedKeys.has(r.key)).reduce((sum,r)=>sum+r.population,0),totalPop=populationRowsTotal||matchedPop,missingPop=unmatchedResult.total;
+ document.getElementById('totalPop').textContent=totalPop?fmt(totalPop):'—';
+ document.getElementById('matchedPop').textContent=matchedPop?fmt(matchedPop):'—';
+ document.getElementById('missingPop').textContent=fmt(missingPop);
+ document.getElementById('coverageRate').textContent=totalPop?((gpop/totalPop)*100).toFixed(1)+'%':'—'
+}
+function ensureWuqiuFeature(){
+ const exists=townFeatures.some(f=>{const n=featureNames(f);return n.county==='金門縣'&&n.town==='烏坵鄉'});
+ if(exists)return;
+ // 部分台灣本島導向的公開圖資完全省略烏坵。以下僅作地圖識別與人口配對用途，
+ // 以大坵、小坵兩個簡化多邊形呈現，不用於精密測量。
+ const box=(lng,lat,dx,dy)=>[[lng-dx,lat-dy],[lng+dx,lat-dy],[lng+dx,lat+dy],[lng-dx,lat+dy],[lng-dx,lat-dy]];
+ townFeatures.push({
+   type:'Feature',
+   properties:{COUNTYNAME:'金門縣',TOWNNAME:'烏坵鄉',name:'金門縣烏坵鄉',syntheticBoundary:true},
+   geometry:{type:'MultiPolygon',coordinates:[[[...box(119.4555,24.9891,0.0042,0.0025)]],[[...box(119.4440,24.9878,0.0033,0.0019)]]]}
+ });
+}
+async function load(){
+ addHospitals();
+ const populationTask=loadPopulation();
+ const topo=await fetchFirst(townUrls);let geo;
+ if(topo.type==='Topology'){if(window.topojson){const obj=topo.objects[Object.keys(topo.objects)[0]];geo=topojson.feature(topo,obj)}else throw new Error('TopoJSON 解析元件未載入')}else geo=topo;
+ townFeatures=(geo.features||[]).map(sanitizeFeature).filter(Boolean).filter(isAdministrativeFeature);
+ ensureWuqiuFeature();
+ if(!townFeatures.length)throw new Error('鄉鎮界線內容為空或格式無法辨識');
+ townFeatures.forEach((f,i)=>Object.defineProperty(f,'__mapIndex',{value:i,enumerable:false}));
+ document.getElementById('status').textContent='正在載入中華郵政行政區經緯度…';
+ const postalCoordCount=await loadPostalAdminCoordinates();
+ seedFallbackTimes();renderTowns();
+ document.getElementById('status').textContent=postalCoordCount?`已載入 ${postalCoordCount} 筆中華郵政行政區座標，正在更新 30 分鐘可及性…`:'中華郵政座標未能載入，已改用行政區代表點計算；正在更新 30 分鐘可及性…';
+ populationTask.then(()=>{
+   renderTowns();
+   const matched=townFeatures.filter(f=>resolvePopulationForFeature(f)).length;
+   const missing=townFeatures.filter(f=>!resolvePopulationForFeature(f)).map(f=>`${countyName(f)}${labelName(f)}`).filter(Boolean);
+   const officeN=Object.values(officePointCache).filter(v=>Array.isArray(v)&&v.length===2).length;
+   document.getElementById('status').textContent=`行政區名稱正規化後已配對 ${matched} 個地圖區域，人口表共 ${populationRowCount} 區、${fmt(populationRowsTotal)} 人；中華郵政座標 ${officeN} 筆，正在更新 30 分鐘可及性…`;
+   if(missing.length)console.warn('仍未配對的地圖行政區',missing)
+ }).catch(()=>{renderTowns();document.getElementById('status').textContent='人口資料未完整載入，紅綠分區可使用，但人口統計暫不採計。'});
+ await routeTimesToAllHospitals()
+}
+load().catch(e=>{console.error(e);document.getElementById('status').innerHTML='地圖資料載入失敗，請重新整理頁面。<br><small>'+String(e&&e.message?e.message:e)+'</small>'});
+</script>
+</body></html>
