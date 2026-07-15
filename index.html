@@ -108,7 +108,14 @@ function canonicalTown(county,town){
  if(upgradedMunicipalities.has(county)&&/[市鎮鄉]$/.test(t))t=t.slice(0,-1)+'區';
  return townAlias[cleanName(county+t)]||t
 }
+function isMarineSubdivisionFeature(f){
+ const p=f&&f.properties?f.properties:{};
+ // 保留原始文字判斷，不能先經 cleanName，否則「梧棲區(海)」會被誤當成「梧棲區」。
+ const raw=String(Object.values(p).join(' ')||'').normalize('NFKC');
+ return /[（(]\s*海\s*[）)]/.test(raw)||/(海域|海面|領海)/.test(raw);
+}
 function isAdministrativeFeature(f){
+ if(isMarineSubdivisionFeature(f))return false;
  const n=featureNames(f);
  return Boolean(n.county&&n.town&&!nonAdministrativeTownNames.has(n.town));
 }
@@ -223,6 +230,20 @@ function sanitizeFeature(f){
  else if(g.type==='MultiPolygon'){coords=(g.coordinates||[]).map(poly=>(poly||[]).map(cleanRing).filter(Boolean)).filter(poly=>poly.length);if(!coords.length)return null}
  else return null;
  return {...f,geometry:{...g,coordinates:coords}}
+}
+function mergeDuplicateAdministrativeFeatures(features){
+ const grouped=new Map();
+ features.forEach(f=>{
+   const n=featureNames(f),key=cleanName(n.county+n.town);
+   if(!key)return;
+   const polygons=f.geometry.type==='Polygon'?[f.geometry.coordinates]:f.geometry.coordinates;
+   if(!grouped.has(key))grouped.set(key,{base:f,polygons:[]});
+   grouped.get(key).polygons.push(...polygons);
+ });
+ return [...grouped.values()].map(({base,polygons})=>{
+   if(polygons.length===1)return {...base,geometry:{type:'Polygon',coordinates:polygons[0]}};
+   return {...base,geometry:{type:'MultiPolygon',coordinates:polygons}};
+ });
 }
 function ringAreaCentroid(ring){
  let twiceArea=0,cx=0,cy=0;
@@ -477,7 +498,7 @@ async function load(){
  const populationTask=loadPopulation();
  const topo=await fetchFirst(townUrls);let geo;
  if(topo.type==='Topology'){if(window.topojson){const obj=topo.objects[Object.keys(topo.objects)[0]];geo=topojson.feature(topo,obj)}else throw new Error('TopoJSON 解析元件未載入')}else geo=topo;
- townFeatures=(geo.features||[]).map(sanitizeFeature).filter(Boolean).filter(isAdministrativeFeature);
+ townFeatures=mergeDuplicateAdministrativeFeatures((geo.features||[]).map(sanitizeFeature).filter(Boolean).filter(isAdministrativeFeature));
  ensureWuqiuFeature();
  if(!townFeatures.length)throw new Error('鄉鎮界線內容為空或格式無法辨識');
  townFeatures.forEach((f,i)=>Object.defineProperty(f,'__mapIndex',{value:i,enumerable:false}));
